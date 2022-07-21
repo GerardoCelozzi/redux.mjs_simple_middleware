@@ -1,0 +1,125 @@
+FUNZIONALITà ASINCRONE
+
+Async funziona sui moduli scritti inline <script async type="module">
+Per gli script normali l’attributo async funziona solamente sugli script esterni, 
+Gli script caricati in modo asincrono (Async) vengono eseguiti immediatamente e indipendentemente dagli altri script e del documento HTML.
+
+Per i moduli async può essere utilizzato sempre.
+
+Ad esempio, lo script seguente è dichiarato asincrono, e quindi non aspetta nulla e viene eseguito.
+
+Esegue l’import (recupera ./analytics.js) e procede quando è pronto, anche se il documento HTML non è completo,
+ o se gli altri script sono ancora in attesa.
+
+Questo comportamento è ottimo per le funzionalità che non dipendono da nulla, come contatori, pubblicità e altro.
+
+<!-- tutte le dipendenze vengono recuperate (analytics.js),e lo script viene eseguito -->
+<!-- non aspetta che il documento o altri <script> tag siano pronti -->
+
+<script async type="module">
+  import {counter} from './analytics.js';
+
+  counter.count();
+</script>
+
+
+SCRIPT ESTERNI 
+
+Gli script esterni che vengono segnalati come moduli, type="module", sono diversi sotto due aspetti:
+
+Più script esterni con lo stesso src vengono eseguiti solo una volta:
+
+<!-- lo script my.js viene recuperato ed eseguito solo una volta -->
+<script type="module" src="my.js"></script>
+<script type="module" src="my.js"></script>
+
+Gli script esterni che vengono recuperati da origini diverse (ad esempio un sito diverso) 
+hanno bisogno delle intestazioni CORS,
+ come descritto nel capitolo Fetch: Cross-Origin Requests.-->  https://it.javascript.info/fetch-crossorigin
+In altre parole, se un modulo viene recuperato da un’altra fonte il server remoto deve fornire un header (intestazione) 
+Access-Control-Allow-Origin dandoci il “permesso” di recuperare lo script.
+
+<!-- another-site.com deve fornire Access-Control-Allow-Origin -->
+<!-- altrimenti lo script non verrà eseguito -->
+<script type="module" src="http://another-site.com/their.js"></script>
+
+Questo meccanismo permette di avere una maggiore sicurezza.
+
+MODULI BARE (BULT IN )
+Non è possibile usare moduli “bare”
+All’interno del browser, import accetta percorsi URL relativi o assoluti. 
+Moduli senza nessun percorso specificato vengono chiamati moduli “bare”. 
+Questi moduli non vengono accettati da import all’interno del browser.
+
+Ad esempio, questo import non è valido:
+
+import {sayHi} from 'sayHi'; // Errore, modulo "bare"
+// Il modulo deve avere un percorso, es. './sayHi.js' od ovunque si trovi il modulo
+
+Alcuni ambienti, come Node.js o tools per creare bundle accettano moduli bare, senza nessun percorso (path),
+ dato che hanno metodologie per trovare e collegare i moduli. 
+ Al contrario i browser ancora non supportano i moduli bare.
+
+COMNPATIBILITà, “nomodule”
+
+I vecchi browser non comprendono l’attributo type="module". Gli script di una tipologia non conosciuta vengono semplicemente ignorati.
+ Proprio per questo è possibile prevedere uno script di riserva usando l’attributo nomodule:
+
+<script type="module">
+  alert("Viene eseguito nei browser moderni");
+</script>
+
+<script nomodule>
+  alert("I browser moderni conoscono sia type=module sia nomodule, quindi ignorano questo script")
+  alert("I browser più vecchi ignorano i tipi di script che non conoscono come type=module, ma eseguono questo");
+</script>
+
+BUILDING 
+Strumenti per il building
+Nella realtà, i moduli vengono raramente usati all’interno del browser in modo diretto. 
+Normalmente, vengono uniti insieme con tool specifici come Webpack e portati nel server di produzione.
+
+Uno dei benefici di usare i “bundlers” – ci permettono più controllo su come i moduli vengono gestiti,
+ ad esempio permettendoci di usare moduli “bare” e moduli CSS/HTML.
+
+I tool per il building si comportano nel modo seguente:
+
+1 Prendono un modulo “principale”, quello che era inteso per essere inserito in <script type="module">.
+2 Analizza tutte le sue dipendenze: che moduli importa, cosa viene importato dai metodi importati etc…
+3 Costruisce un singolo file con tutti i moduli (o più file, può essere impostato), 
+    sostituendo le chiamate import con funzioni del bundler. In questo modo può supportare anche moduli “speciali” come quelli CSS/HTML.
+Durante il processo altre trasformazioni e ottimizzazioni possono essere eseguite:
+ 5 Parti di codice che non possono essere raggiunte vengono eliminate.
+ 6 export non utilizzati vengono rimossi (“tree-shaking”).
+ 7 Parti di codice tipicamente utilizzati durante lo sviluppo come console e debugger rimosse. 
+ 8 Le sintassi più moderne di JavaScript vengono sostituite con funzionalità equivalenti più vecchie e compatibili usando Babel.
+ 9 Il file risultante viene ridotto al minimo (minified), gli spazi superflui rimossi, i nomi delle variabili sostituiti con nomi corti etc…
+
+Quindi se usiamo questa tipologia di strumenti, allora gli script vengono raggruppati in un singolo script (o pochi file),
+ import/export sostituiti con speciali funzioni in modo che lo script finale non contenga più nessun import/export,
+  non richiede l’uso di type="module" e può essere utilizzato come un normale script:
+
+<!-- Assumendo che abbiamo ottenuto bundle.js da un tool come Webpack -->
+<script src="bundle.js"></script>
+Appurato questo, moduli in modo nativo possono comunque essere usati. 
+
+
+RIWPILOGO
+
+Per ricapitolare, i concetti principali sono:
+
+1 Un modulo è un file. Per far funzionare import/export, il browser ha bisogno di <script type="module">. 
+2 I moduli hanno alcune differenze:
+   * Vengono eseguiti in modo differito automaticamente
+   * Async funziona sui moduli in linea
+   * Per caricare moduli esterni provenienti da un’origine diversa (un altro dominio/protocollo/porta), sono necessarie le intestazioni CORS.
+   * I moduli esterni duplicati vengono ignorati (un modulo esterno viene eseguito solo la prima volta che viene importato)
+   * I moduli hanno il loro livello di visibilità delle variabili (scope) e si scambiano funzionalità attraverso import/export.
+   * I moduli utilizzano sempre use strict automaticamente.
+   * Il codice di un modulo viene eseguito solamente una volta. Le esportazioni (export) vengono create un’unica volta e condivise con tutti i moduli che le importano.
+   * Quando utilizziamo i moduli, ogni modulo implementa una certa funzionalità e la esporta.
+     Successivamente utilizziamo import per importare quella funzionalità e utilizzarla dove è necessario.
+      I browser caricano ed eseguono lo script automaticamente.
+
+In PRODUZIONE, di solito si tende a usare tool detti “bundlers” come Webpack per unire insieme tutti i moduli per maggiori prestazioni,
+ compatibilità e altro.

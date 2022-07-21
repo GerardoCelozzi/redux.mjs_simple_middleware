@@ -1,0 +1,209 @@
+JavaScript ora ha una sintassi standardizzata esattamente per questo. 
+All'interno di un modulo, puoi utilizzare la parola chiave export per esportare qualsiasi cosa.
+ È possibile esportare un const, una funzione o qualsiasi altra associazione o dichiarazione di variabile. 
+Basta anteporre l'istruzione o la dichiarazione della variabile con export 
+
+Ad esempio, se abbiamo un file sayHi.js possiamo rendere utilizzabile all’esterno la funzione(esportarla) in questo modo:
+
+// 📁 sayHi.js
+*export function sayHi(user) {
+*  alert(`Ciao, ${user}!`);
+*}
+…Successivamente un’altro file può importarla e usarla in questo modo:
+
+// 📁 main.js
+*import {sayHi} from './sayHi.js';
+
+*alert(sayHi); // function...
+*sayHi('John'); // Ciao, John!
+
+La direttiva import carica il modulo presente al percorso ./sayHi.js, 
+relativamente al file corrente, e assegna la funzione esportata sayHi alla variabile corrispondente.
+
+Ora proviamo ad utilizzare l’esempio all’interno del browser.
+
+Dato che i moduli utilizzano parole chiavi e funzionalità speciali, 
+dobbiamo comunicare al browser che lo script deve essere trattato come un modulo, 
+utilizzando l’attributo <script type="module">.
+
+In questo modo:
+
+In index.html apriamo lo script e importiamo  il modulo say.js e definiamo nell import la funzione sayHi che esso esporta
+*<!doctype html>
+*<script type="module">
+* import {sayHi} from './say.js';
+
+*  document.body.innerHTML = sayHi('John');
+*</script>
+
+Il browser recupera ed elabora automaticamente il modulo importato (e i suoi import se necessario), e infine esegue lo script.
+
+**************************************************************************************
+Modules work only via HTTP(s), not in local files                                    *
+Se provate ad aprire una pagina web in locale, tramite il protocollo file://,        * 
+scoprirete che le direttive import/export non funzionano.                            * 
+Per questo vanno utilizzati dei web-server locali come static-server                 * 
+oppure utilizzando la funzionalità “live server” dell’editor di codice,              *
+come quello di VS Code Live Server Extension per testare i moduli.                   *  
+**************************************************************************************
+
+FUNZIONALITà PRINCIPALI DEI MODULI RISPETTO AGLI SCRIPT
+
+Cosa c’è di diverso nei moduli rispetto ai “normali” script?
+Ci sono delle funzionalità aggiunte, valide sia per codice JavaScript all’interno dei browser sia per quello eseguito lato server.
+
+SCOPE MODULI
+ogni modulo ha la sua visibilita 
+due script di tipo module fratelli non condividono lo SCOPE
+affinche lo possano condividere uno di esse deve importare l altro 
+
+IN ALTERNATIVA
+Nel browser, possiamo creare una variabile globale assegnandola esplicitamente ad una proprietà di window, 
+ad esempio window.user = "John".
+Così sarà accessibile a tutti gli scripts, sia con type="module" che senza.
+Detto questo, creare questo genere di variabili è una cattiva pratica, cercate di evitarlo.
+
+BOROWSER O SERVER IMPORTAZIONE MODULO
+Se lo stesso modulo viene importato in vari altri moduli, il suo codice viene eseguito solo una volta, durante il primo import.
+Successivamente tutti i suoi exports vengono distribuiti agli altri moduli che la importano. 
+
+REGOLA FONDAMENTALE (BEST PRACTIS)
+MODELLI ,STRUTTURE DATI 
+ il codice del modulo di primo livello dovrebbe essere usato per l’inizializzazione,
+  la creazione di strutture dati interne specifiche del modulo.
+
+RIUSO  
+Se abbiamo bisogno di rendere qualcosa richiamabile più volte, 
+dovremmo esportarlo come una funzione.
+
+PENSA A  UN MODULO JS COME UNA CLASSE STATICA DI JAVA
+OVVERO SI INSTANZIA UNA SOLA VOLTA E TUTTE LE CONSTANTI E O I METODI COMUNI SONO ACCESSIBILI
+IN TUTTI I FILE CHE IMPORTANO QUESTA CLASSE
+OGNI MODIFICA SU DI ESSO  è UNA MODIFICA SULL OGGETTO CONDIVISO A TUTTI
+
+******************* ESEMPIO *****************************
+Prendiamo in considerazione un modulo che esporta un oggetto:
+
+// 📁 admin.js
+export let admin = {
+  name: "John"
+};
+Nel momento che questo modulo viene importato in più file viene comunque eseguito una sola volta,
+ l’oggetto admin viene creato e poi passato a tutti i moduli che lo hanno importato.
+
+Tutti quindi ottengono esattamente lo stesso oggetto admin:
+
+// 📁 1.js
+import {admin} from './admin.js';
+admin.name = "Pete";
+
+// 📁 2.js
+import {admin} from './admin.js';
+alert(admin.name); // Pete
+
+// Entrambi 1.js e 2.js si riferiscono allo stesso oggetto
+// I cambiamenti fatti in 1.js sono visibili in 2.js
+
+QUESTO COMPORTAMENTO è UTILE CI PERMETTE DI CONFIGUARE I MODULI 
+
+In altre parole, un modulo può fornire una funzionalità generica che necessita di una configurazione.
+ Per esempio. l’autenticazione necessita di credenziali.
+  Quindi può esportare un oggetto di configurazione aspettandosi che il codice esterno gli venga assegnato.
+
+Ecco lo schema classico:
+
+Un modulo esporta alcuni strumenti di configurazione, ad es. un oggetto di configurazione.
+Alla prima importazione lo inizializziamo, impostando le sue proprietà. Potrebbe farlo lo script di livello più alto.
+Ulteriori importazioni utilizzano il modulo.
+Per fare un esempio, il modulo admin.js può fornire alcune funzionalità (ad esempio l’autenticazione), 
+ma si aspetta di ricevere le credenziali all’interno dell’oggetto config dall’esterno:
+
+// 📁 admin.js
+export let config = { };
+
+export function sayHi() {
+  alert(`Sono pronto, ${config.user}!`);
+}
+
+Qui, admin.js esporta l’oggetto config (inizialmente vuoto, ma potrebbe anche avere proprietà predefinite).
+Quindi in init.js, il primo script della nostra applicazione, importiamo config ed impostiamo config.user:
+
+// 📁 init.js
+import {config} from './admin.js';
+config.user = "Pete";
+…Ora il modulo admin.js è configurato.
+
+Le successive importazioni chiamarlo, e verrà mostrato correttamente lo user corrente:
+
+// 📁 another.js
+import {sayHi} from './admin.js';
+
+sayHi(); // Sono pronto, Pete!
+
+
+FUNZIONALITà
+
+import.meta
+L’oggetto import.meta contiene le informazioni riguardanti il modulo corrente.
+Il suo contenuto dipende dall’ambiente di esecuzione. 
+Nel browser, contiene l’URL dello script o dell’attuale pagina web se inserito all’interno dell’HTML:
+
+<script type="module">
+  alert(import.meta.url); // script URL
+  // per gli inline script è l'URL della pagina corrente
+</script>
+
+THIS
+All’interno di un modulo, “this” non è definito (undefined)
+
+In un modulo, Il this di livello maggiore non è definito (undefined).
+Facciamo il confronto con uno script che non è un modulo, dove this è un oggetto globale.
+
+<script>
+  alert(this); // window
+</script>
+
+<script type="module">
+  alert(this); // undefined
+</script>
+
+CARICAMENTO MODULI IN MODO DIFFERT0
+I moduli vengono sempre reputati script differiti, stesso effetto dell’attributo defer 
+(descritto nel capitolo Scripts: async, defer)-->https://it.javascript.info/script-async-defer 
+sia per gli script esterni che per quelli interni.
+
+In altre parole:
+
+Il download di un modulo esterno <script type="module" src="..."> non blocca l’elaborazione dell’HTML, 
+vengono caricati in parallelo insieme alle altre risorse.
+I moduli attendono fino al momento in cui l’HTML è pronto (anche se sono molto piccoli e possono essere elaborati più velocemente dell’HTML),
+ e poi vengono eseguiti.
+L’ordine relativo degli script viene mantenuto: gli script che appaiono prima nel documento vengono eseguiti per primi.
+Come conseguenza, i moduli “vedono” sempre la pagina HTML completamente caricata, inclusi gli elementi sotto di essi.
+
+Ad esempio:
+
+<script type="module">
+  alert(typeof button); // Object: lo script può 'vedere' il bottone sottostante
+  // dato che il modulo viene caricato in modo differito, viene eseguito solo dopo che l'intera pagina è stata caricata
+</script>
+
+Confrontiamo lo script normale:
+
+<script>
+  alert(typeof button); // Error: button is undefined, lo script non riesce a vedere il bottone
+  // Gli script normali vengono eseguiti immediatamente, prima che il resto della pagina venga processata
+</script>
+
+<button id="button">Button</button>
+
+QUINDI: il secondo script viene eseguito per primo! Infatti vedremo prima undefined, e dopo object.
+
+Questo accade proprio perché i moduli sono differiti, e quindi attendono che tutto il documento venga processato, al contrario,
+ gli script normali vengono eseguiti immediatamente e di conseguenza vediamo l’output del secondo script per primo.
+
+Quando utilizziamo i moduli, dobbiamo porre attenzione al fatto che la pagina HTML appare mentre viene caricata, 
+e i moduli JavaScript vengono eseguiti successivamente al caricamento, di conseguenza l’utente potrebbe vedere la pagina prima
+ che l’applicazione JavaScript sia pronta. Alcune funzionalità potrebbero in questo modo non funzionare immediatamente. 
+ Per questo motivo è opportuno inserire degli indicatori di caricamento, 
+o comunque assicurarci che i visitatori non vengano confusi da questi possibili comportamenti.

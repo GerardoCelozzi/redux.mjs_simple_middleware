@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="">
+        <div>
+            <label for="word">type a word</label>
+            <input type="text" id="word" name="name_word"><!-- name serve come prop nell oggetto che saleveremo come stato-->
+        </div>
+        <button type="submit">Send</button>
+    </form>
+    
+</body>
+<!--
+    lo script module importa nella nostra ui il file index.js
+    con il file index.js importiamo redux
+-->
+<script type="module" src="./index.js"></script>
+<!-- <script>
+    const action={
+        p:'sono un action'
+    }
+    function outher(){
+
+        return function(calbback){
+
+            return function (action){
+                return calbback(action)
+                
+            }
+        }
+    }
+
+    function calbback(action){
+        return action
+
+    }
+    console.log(outher())
+
+</script> -->
+<script type="module">
+    alert(import.meta.url); // script URL
+    // per gli inline script è l'URL della pagina corrente
+  </script>
+
+</html>
